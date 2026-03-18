@@ -52,3 +52,13 @@ python manage.py createsuperuser
 
 # Khởi chạy Server
 python manage.py runserver
+
+**### 2. Cài đặt Frontend (React)**
+# Mở một terminal mới, chuyển vào thư mục frontend
+cd ecms/frontend
+
+# Cài đặt dependencies
+npm install  # hoặc yarn install
+
+# Khởi chạy ứng dụng
+npm start    # hoặc yarn start
