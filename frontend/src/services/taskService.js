@@ -8,11 +8,17 @@ const taskService = {
     return response.data;
   },
 
+  createTask: async (taskData) => {
+    const response = await axiosClient.post('/tasks/', taskData);
+    return response.data;
+  },
+
   // (Chuẩn bị sẵn) Hàm cập nhật trạng thái Task
   updateTaskStatus: async (taskId, statusData) => {
     const response = await axiosClient.patch(`/tasks/${taskId}/status/`, statusData);
     return response.data;
   }
 };
+
 
 export default taskService;

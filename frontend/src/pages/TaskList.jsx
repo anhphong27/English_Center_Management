@@ -1,17 +1,32 @@
 // frontend/src/pages/TaskList.jsx
-import React, { useState, useEffect } from 'react';
-import { 
-  Box, Typography, Paper, Table, TableBody, TableCell, 
-  TableContainer, TableHead, TableRow, Chip, Button, 
-  FormControl, InputLabel, Select, MenuItem, CircularProgress
-} from '@mui/material';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import taskService from '../services/taskService';
+import React, { useState, useEffect } from "react";
+import {
+  Box,
+  Typography,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  Button,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  CircularProgress,
+} from "@mui/material";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import taskService from "../services/taskService";
+import CreateTaskModal from "../components/CreateTaskModal";
 
 const TaskList = () => {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [filterStatus, setFilterStatus] = useState('');
+  const [filterStatus, setFilterStatus] = useState("");
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Hàm gọi API lấy dữ liệu
   const fetchTasks = async () => {
@@ -20,9 +35,9 @@ const TaskList = () => {
       // Nếu filterStatus rỗng thì lấy tất cả, nếu có thì truyền lên API để lọc
       const params = filterStatus ? { status: filterStatus } : {};
       const data = await taskService.getTasks(params);
-      
+
       // DRF trả về data.results nếu có phân trang, hoặc mảng data trực tiếp
-      setTasks(data.results || data); 
+      setTasks(data.results || data);
     } catch (error) {
       console.error("Lỗi khi tải danh sách Task:", error);
     } finally {
@@ -38,14 +53,14 @@ const TaskList = () => {
   // Hàm tiện ích để render màu sắc Chip dựa theo trạng thái
   const getStatusChip = (status) => {
     switch (status) {
-      case 'PENDING':
-      case 'PENDING_TEACHER':
-      case 'PENDING_MANAGER':
-      case 'PENDING_STAFF':
+      case "PENDING":
+      case "PENDING_TEACHER":
+      case "PENDING_MANAGER":
+      case "PENDING_STAFF":
         return <Chip label="Đang chờ xử lý" color="warning" size="small" />;
-      case 'NEEDS_REVISION':
+      case "NEEDS_REVISION":
         return <Chip label="Cần chỉnh sửa" color="error" size="small" />;
-      case 'DONE':
+      case "DONE":
         return <Chip label="Đã hoàn thành" color="success" size="small" />;
       default:
         return <Chip label={status} size="small" />;
@@ -59,7 +74,15 @@ const TaskList = () => {
       </Typography>
 
       {/* Thanh công cụ / Bộ lọc */}
-      <Paper sx={{ p: 2, mb: 3, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <Paper
+        sx={{
+          p: 2,
+          mb: 3,
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+        }}
+      >
         <FormControl sx={{ minWidth: 250 }} size="small">
           <InputLabel>Lọc theo Trạng thái</InputLabel>
           <Select
@@ -67,14 +90,20 @@ const TaskList = () => {
             label="Lọc theo Trạng thái"
             onChange={(e) => setFilterStatus(e.target.value)}
           >
-            <MenuItem value=""><em>Tất cả Task</em></MenuItem>
+            <MenuItem value="">
+              <em>Tất cả Task</em>
+            </MenuItem>
             <MenuItem value="PENDING">Đang chờ xử lý</MenuItem>
             <MenuItem value="NEEDS_REVISION">Cần chỉnh sửa</MenuItem>
             <MenuItem value="DONE">Đã hoàn thành</MenuItem>
           </Select>
         </FormControl>
 
-        <Button variant="contained" color="primary">
+        <Button
+          variant="contained"
+          color="primary"
+          onClick={() => setIsModalOpen(true)}
+        >
           + Tạo Task Mới
         </Button>
       </Paper>
@@ -82,19 +111,31 @@ const TaskList = () => {
       {/* Bảng Dữ liệu */}
       <TableContainer component={Paper} elevation={2}>
         {loading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
             <CircularProgress />
           </Box>
         ) : (
           <Table>
-            <TableHead sx={{ backgroundColor: '#f5f5f5' }}>
+            <TableHead sx={{ backgroundColor: "#f5f5f5" }}>
               <TableRow>
-                <TableCell><b>Mã Task</b></TableCell>
-                <TableCell><b>Loại Công Việc</b></TableCell>
-                <TableCell><b>Người Tạo</b></TableCell>
-                <TableCell><b>Trạng Thái</b></TableCell>
-                <TableCell><b>Ngày Tạo</b></TableCell>
-                <TableCell align="center"><b>Hành Động</b></TableCell>
+                <TableCell>
+                  <b>Mã Task</b>
+                </TableCell>
+                <TableCell>
+                  <b>Loại Công Việc</b>
+                </TableCell>
+                <TableCell>
+                  <b>Người Tạo</b>
+                </TableCell>
+                <TableCell>
+                  <b>Trạng Thái</b>
+                </TableCell>
+                <TableCell>
+                  <b>Ngày Tạo</b>
+                </TableCell>
+                <TableCell align="center">
+                  <b>Hành Động</b>
+                </TableCell>
               </TableRow>
             </TableHead>
             <TableBody>
@@ -109,11 +150,19 @@ const TaskList = () => {
                   <TableRow key={task.id} hover>
                     <TableCell>#{task.id}</TableCell>
                     <TableCell>{task.task_type}</TableCell>
-                    <TableCell>{task.created_by_name || `User ${task.created_by}`}</TableCell>
+                    <TableCell>
+                      {task.created_by_name || `User ${task.created_by}`}
+                    </TableCell>
                     <TableCell>{getStatusChip(task.status)}</TableCell>
-                    <TableCell>{new Date(task.created_at).toLocaleDateString('vi-VN')}</TableCell>
+                    <TableCell>
+                      {new Date(task.created_at).toLocaleDateString("vi-VN")}
+                    </TableCell>
                     <TableCell align="center">
-                      <Button variant="outlined" size="small" startIcon={<VisibilityIcon />}>
+                      <Button
+                        variant="outlined"
+                        size="small"
+                        startIcon={<VisibilityIcon />}
+                      >
                         Xem
                       </Button>
                     </TableCell>
@@ -124,6 +173,12 @@ const TaskList = () => {
           </Table>
         )}
       </TableContainer>
+
+      <CreateTaskModal 
+        open={isModalOpen} 
+        onClose={() => setIsModalOpen(false)} 
+        onSuccess={fetchTasks} // Khi tạo thành công, tự động gọi lại fetchTasks để làm mới bảng
+      />
     </Box>
   );
 };
