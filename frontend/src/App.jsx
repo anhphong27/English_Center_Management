@@ -5,6 +5,7 @@ import { CssBaseline, ThemeProvider, createTheme, Typography, Box } from '@mui/m
 import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminLayout from './layouts/AdminLayout';
+import TaskList from './pages/TaskList';
 
 // Giao diện mặc định cho các trang chưa làm kịp
 const ComingSoon = ({ title }) => (
@@ -44,7 +45,7 @@ function App() {
             <Route path="courses" element={<ComingSoon title="Cấu trúc Khóa học" />} />
             <Route path="students" element={<ComingSoon title="Học viên & Học phí" />} />
             <Route path="grades" element={<ComingSoon title="Sổ điểm Lớp học" />} />
-            <Route path="tasks" element={<ComingSoon title="Quản lý Task" />} />
+            <Route path="tasks" element={<TaskList />} />
           </Route>
           
           {/* Fallback */}
