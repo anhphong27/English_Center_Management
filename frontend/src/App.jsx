@@ -6,6 +6,8 @@ import Dashboard from './pages/Dashboard';
 import AdminLayout from './layouts/AdminLayout';
 import TaskList from './pages/TaskList';
 import Gradebook from './pages/Gradebook';
+import CourseStructure from './pages/CourseStructure';
+import StudentTuition from './pages/StudentTuition';
 
 // Giao diện mặc định cho các trang chưa làm kịp
 const ComingSoon = ({ title }) => (
@@ -42,8 +44,8 @@ function App() {
           <Route path="/" element={<ProtectedRoute><AdminLayout /></ProtectedRoute>}>
             {/* Các trang con sẽ được render vào vị trí <Outlet /> của AdminLayout */}
             <Route index element={<Dashboard />} />
-            <Route path="courses" element={<ComingSoon title="Cấu trúc Khóa học" />} />
-            <Route path="students" element={<ComingSoon title="Học viên & Học phí" />} />
+            <Route path="courses" element={<CourseStructure />} />
+            <Route path="students" element={<StudentTuition />} />
             <Route path="grades" element={<Gradebook />} />
             <Route path="tasks" element={<TaskList />} />
           </Route>
