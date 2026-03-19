@@ -14,7 +14,7 @@ router.register(r'student-tuitions', StudentTuitionViewSet)
 router.register(r'payment-receipts', PaymentReceiptViewSet)
 router.register(r'enrollments', EnrollmentViewSet)
 router.register(r'tasks', TaskViewSet)
-router.register(r'grade-records', GradeRecordViewSet)
+router.register(r'grades', GradeRecordViewSet)
 
 
 urlpatterns = [

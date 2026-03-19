@@ -58,6 +58,9 @@ class Student(models.Model):
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, unique=True)
     status = models.CharField(max_length=20, default='ACTIVE')
+
+    def __str__(self): 
+        return self.full_name
     
 class TuitionPackage(models.Model):
     PACKAGE_TYPES = [('SINGLE', 'Lẻ từng Band'), ('ROADMAP', 'Lộ trình nhiều Band')]
@@ -67,6 +70,9 @@ class TuitionPackage(models.Model):
 
     package_type = models.CharField(max_length=20, choices=PACKAGE_TYPES)
     bands_included = models.ManyToManyField(Band, related_name='tuition_packages')
+
+    def __str__(self):
+        return self.name
 
 class StudentTuition(models.Model):
     total_amount = models.DecimalField(max_digits=12, decimal_places=0)

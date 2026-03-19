@@ -1,4 +1,3 @@
-// frontend/src/App.jsx
 import React from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { CssBaseline, ThemeProvider, createTheme, Typography, Box } from '@mui/material';
@@ -6,6 +5,7 @@ import Login from './pages/Login';
 import Dashboard from './pages/Dashboard';
 import AdminLayout from './layouts/AdminLayout';
 import TaskList from './pages/TaskList';
+import Gradebook from './pages/Gradebook';
 
 // Giao diện mặc định cho các trang chưa làm kịp
 const ComingSoon = ({ title }) => (
@@ -44,7 +44,7 @@ function App() {
             <Route index element={<Dashboard />} />
             <Route path="courses" element={<ComingSoon title="Cấu trúc Khóa học" />} />
             <Route path="students" element={<ComingSoon title="Học viên & Học phí" />} />
-            <Route path="grades" element={<ComingSoon title="Sổ điểm Lớp học" />} />
+            <Route path="grades" element={<Gradebook />} />
             <Route path="tasks" element={<TaskList />} />
           </Route>
           
