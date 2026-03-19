@@ -4,18 +4,22 @@ from .models import User, Branch, Course, Band, ClassGroup, Student, TuitionPack
 from .serializers import BranchSerializer, CourseSerializer, BandSerializer, ClassGroupSerializer, StudentSerializer, TuitionPackageSerializer, StudentTuitionSerializer, PaymentReceiptSerializer, EnrollmentSerializer, TaskSerializer, GradeRecordSerializer
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from .permissions import IsAdmin, IsManagerOrAdmin, IsStaffOrManagerOrAdmin, IsTeacher
 
 class BranchViewSet(viewsets.ModelViewSet):
     queryset = Branch.objects.all()
     serializer_class = BranchSerializer
+    permission_classes = [IsAdmin]
 
 class CourseViewSet(viewsets.ModelViewSet):
     queryset = Course.objects.all()
     serializer_class = CourseSerializer
+    permission_classes = [IsManagerOrAdmin]
 
 class BandViewSet(viewsets.ModelViewSet):
     queryset = Band.objects.all()
     serializer_class = BandSerializer
+
 
 class ClassGroupViewSet(viewsets.ModelViewSet):
     queryset = ClassGroup.objects.all()
@@ -31,6 +35,7 @@ class ClassGroupViewSet(viewsets.ModelViewSet):
 class StudentViewSet(viewsets.ModelViewSet):
     queryset = Student.objects.all()
     serializer_class = StudentSerializer
+    permission_classes = [IsStaffOrManagerOrAdmin]
 
 class TuitionPackageViewSet(viewsets.ModelViewSet):
     queryset = TuitionPackage.objects.all()
@@ -43,6 +48,7 @@ class StudentTuitionViewSet(viewsets.ModelViewSet):
 class PaymentReceiptViewSet(viewsets.ModelViewSet):
     queryset = PaymentReceipt.objects.all()
     serializer_class = PaymentReceiptSerializer
+    permission_classes = [IsStaffOrManagerOrAdmin]
 
 class EnrollmentViewSet(viewsets.ModelViewSet):
     queryset = Enrollment.objects.all()
@@ -73,7 +79,7 @@ class GradeRecordViewSet(viewsets.ModelViewSet):
         return queryset
 
     # API Custom: Nút "Chốt điểm & Gửi Giáo vụ"
-    @action(detail=False, methods=['post'], url_path='submit-grades')
+    @action(detail=False, methods=['post'], url_path='submit-grades', permission_classes=[IsTeacher])
     def submit_grades(self, request):
         class_id = request.data.get('class_id')
         if not class_id:
