@@ -2,11 +2,15 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Grid, List, ListItem, ListItemButton, ListItemText, Divider, Table, TableBody, TableCell, TableHead, TableRow, Chip, Button } from '@mui/material';
 import academicService from '../services/academicService';
+import CreateClassModal from '../components/CreateClassModal';
+
 
 const CourseStructure = () => {
   const [courses, setCourses] = useState([]);
   const [classes, setClasses] = useState([]);
   const [selectedCourse, setSelectedCourse] = useState(null);
+  const [isClassModalOpen, setClassModalOpen] = useState(false);
+
 
   useEffect(() => {
     academicService.getCourses().then(setCourses).catch(console.error);
@@ -60,7 +64,11 @@ const CourseStructure = () => {
               <Typography variant="h6">
                 {selectedCourse ? `Các Lớp thuộc: ${selectedCourse.name}` : 'Vui lòng chọn 1 Khóa học'}
               </Typography>
-              {selectedCourse && <Button variant="outlined" size="small">+ Thêm Lớp</Button>}
+              {selectedCourse && (
+                <Button variant="outlined" size="small" onClick={() => setClassModalOpen(true)}>
+                  + Thêm Lớp
+                </Button>
+              )}
             </Box>
             <Box sx={{ p: 2, overflow: 'auto', flexGrow: 1 }}>
               {!selectedCourse ? (
@@ -94,6 +102,7 @@ const CourseStructure = () => {
           </Paper>
         </Grid>
       </Grid>
+      {selectedCourse && (<CreateClassModal open={isClassModalOpen} onClose={() => setClassModalOpen(false)} courseId={selectedCourse.id} onSuccess={() => handleSelectCourse(selectedCourse)} />)}
     </Box>
   );
 };

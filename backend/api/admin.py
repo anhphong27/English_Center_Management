@@ -5,7 +5,7 @@ from .models import User, Branch, Course, Band, ClassGroup, Student, TuitionPack
 class CustomUserAdmin(UserAdmin):
     fieldsets = UserAdmin.fieldsets + (('Thông tin phân quyền', {'fields': ('role',)}),)
 
-    list_display = ('username', 'email', 'role', 'is_staff', 'is_superuser')
+    list_display = ('username', 'email', 'role', 'is_staff')
 
 admin.site.register(User, CustomUserAdmin)
 admin.site.register(Branch)

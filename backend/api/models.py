@@ -6,17 +6,17 @@ from django.dispatch import receiver
 #1. Quản lí user và phân quyền
 class User(AbstractUser):
     ROLE_CHOICES = [
-        ('ADMIN', 'Superuser/System Admin'),
+        ('ADMIN', 'System Admin'),
         ('MANAGER', 'Quản lý'),
         ('STAFF', 'Giáo vụ'),
         ('TEACHER', 'Giáo viên'),
     ]
 
     role = models.CharField(max_length=20, choices=ROLE_CHOICES)
-    phone_number = models.CharField(max_length=20, blank=True, null=True)
+    phone_number = models.CharField(max_length=20, blank=True, null=True, unique=True)
 
     def __str__(self):
-        return f"{self.username}"
+        return f"{self.username} -"
 
 #2. Quản lí cấu trúc đào tạo: Chi nhánh -> Khóa học -> Lớp học(Band)
 class Branch(models.Model):
@@ -24,7 +24,7 @@ class Branch(models.Model):
     address = models.TextField()
 
     def __str__(self): 
-        return self.name
+        return f"{self.name} - {self.address}"
 
 class Course(models.Model):
     name = models.CharField(max_length=255)
@@ -43,8 +43,10 @@ class Band(models.Model):
         return self.name
 
 class ClassGroup(models.Model):
+    STATUS_CHOICES = [('ACTIVE', 'Đang mở'), ('INACTIVE', 'Đóng')]
+
     name = models.CharField(max_length=255)
-    status = models.CharField(max_length=20, default='ACTIVE')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
 
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='class_groups')
     band = models.ForeignKey(Band, on_delete=models.PROTECT, related_name='class_groups')
@@ -55,9 +57,13 @@ class ClassGroup(models.Model):
     
 #3. Quản lí học sinh - học phí
 class Student(models.Model):
+    STATUS_CHOICES = [('ACTIVE', 'Đang học'), ('INACTIVE', 'Đã nghỉ')]
+
     full_name = models.CharField(max_length=255)
     phone = models.CharField(max_length=20, unique=True)
-    status = models.CharField(max_length=20, default='ACTIVE')
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE')
+    parent_name = models.CharField(max_length=255, blank=True, null=True)
+    parent_phone = models.CharField(max_length=20, blank=True, null=True)
 
     def __str__(self): 
         return self.full_name
@@ -96,9 +102,29 @@ class Enrollment(models.Model):
 
 # 4. MODULE ĐÁNH GIÁ 4 KỸ NĂNG & WORKFLOW TASK
 class Task(models.Model):
-    task_type = models.CharField(max_length=50) # CHUYEN_LOP, CHAM_DIEM...
-    status = models.CharField(max_length=20, default='PENDING') # PENDING, NEEDS_REVISION, DONE
-    rejection_reason = models.TextField(null=True, blank=True)
+    TASK_TYPES = [
+        ('CHUYEN_LOP', 'Chuyển lớp'),
+        ('XIN_NGUNG_HOC', 'Xin ngừng học'),
+        ('XIN_PHAN_HOI', 'Xin phản hồi về học viên'),
+        ('BAO_LUU','Bảo lưu'),
+        ('XIN_HOC_LAI', 'Xin học lại'),
+        ('KHAC', 'Khác'),
+    ]
+
+    STATUS_CHOICES = [
+        ('CHO_GIAO_VIEN_DUYET', 'Đang chờ giáo viên duyệt'),
+        ('CHO_QUAN_LY_DUYET', 'Đang chờ quản lý duyệt'),
+        ('CAN_THEM_THONG_TIN', 'Cần thêm thông tin'),
+        ('GIAO_VIEN_DUYET', 'Giáo viên đã duyệt'),
+        ('QUAN_LY_DUYET', 'Quản lý đã duyệt'),
+        ('HOAN_TAT', 'Hoàn tất'),
+        ('TU_CHOI', 'Từ chối'),
+    ]
+
+    task_type = models.CharField(max_length=50, choices=TASK_TYPES) 
+    status = models.CharField(max_length=20,choices=STATUS_CHOICES)
+    teacher_rejection_reason = models.TextField(null=True, blank=True)
+    manager_rejection_reason = models.TextField(null=True, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 

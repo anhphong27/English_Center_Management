@@ -3,9 +3,11 @@ import React, { useState, useEffect } from 'react';
 import { Box, Typography, Paper, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Button, Chip } from '@mui/material';
 import PaymentIcon from '@mui/icons-material/Payment';
 import studentService from '../services/studentService';
+import TuitionPaymentModal from '../components/TuitionPaymentModal';
 
 const StudentTuition = () => {
   const [students, setStudents] = useState([]);
+  const [selectedStudent, setSelectedStudent] = useState(null);
 
   useEffect(() => {
     studentService.getStudents().then(setStudents).catch(console.error);
@@ -42,9 +44,7 @@ const StudentTuition = () => {
                     <Chip label={student.status} size="small" color={student.status === 'ACTIVE' ? 'success' : 'default'} />
                   </TableCell>
                   <TableCell align="center">
-                    <Button variant="outlined" color="success" size="small" startIcon={<PaymentIcon />}>
-                      Thu Tiền / Gói
-                    </Button>
+                    <Button variant="outlined" color="success" size="small" onClick={() => setSelectedStudent(student)}>Thu Tiền / Gói</Button>
                   </TableCell>
                 </TableRow>
               ))
@@ -52,6 +52,7 @@ const StudentTuition = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      <TuitionPaymentModal  open={Boolean(selectedStudent)}  onClose={() => setSelectedStudent(null)}  student={selectedStudent} onSuccess={() => { /* Có thể gọi lại hàm fetch students ở đây */ }}/>
     </Box>
   );
 };
