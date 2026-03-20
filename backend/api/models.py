@@ -1,7 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models.signals import m2m_changed 
+from django.db.models.signals import m2m_changed, post_save 
 from django.dispatch import receiver
+from django.utils import timezone
+from django.db.models import Sum
 
 # ==========================================
 # 1. QUẢN LÝ TÀI KHOẢN VÀ PHÂN QUYỀN
@@ -88,8 +90,10 @@ class Student(models.Model):
 
     class Meta:
         verbose_name = "Học viên"
-        verbose_name_plural = "3.1 Danh sách Học viên"
-    def __str__(self): return f"{self.full_name} (HV-{self.id})"
+        verbose_name_plural = "3.1 Học viên"
+    
+    def __str__(self): 
+        return f"{self.full_name} - {self.dob}"
     
 class TuitionPackage(models.Model):
     PACKAGE_TYPES = [('SINGLE', 'Lẻ từng Band'), ('ROADMAP', 'Lộ trình nhiều Band')]
@@ -100,28 +104,89 @@ class TuitionPackage(models.Model):
     class Meta:
         verbose_name = "Gói Học phí"
         verbose_name_plural = "3.2 Gói Học phí"
-    def __str__(self): return self.name
+    
+    def __str__(self): 
+        return self.name
 
 class StudentTuition(models.Model):
-    total_amount = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Tổng tiền phải đóng")
+    STATUS_CHOICES = [('IN_PROGRESS', 'Đang đóng'), ('COMPLETED', 'Đã hoàn thành')] # <--- THÊM DÒNG NÀY
+
+    total_amount = models.DecimalField(max_digits=12, decimal_places=0, blank=True, verbose_name="Tổng tiền phải đóng")
     installments_planned = models.IntegerField(default=1, verbose_name="Số đợt chia đóng")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='IN_PROGRESS', verbose_name="Trạng thái") # <--- THÊM DÒNG NÀY
     created_at = models.DateTimeField(auto_now_add=True, verbose_name="Ngày đăng ký")
+    
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name='tuitions', verbose_name="Học viên")
     package = models.ForeignKey(TuitionPackage, on_delete=models.PROTECT, related_name='student_tuitions', verbose_name="Gói đã mua")
+
     class Meta:
         verbose_name = "Hồ sơ Học phí"
         verbose_name_plural = "3.3 Hồ sơ Học phí (Đăng ký gói)"
+    
     def __str__(self): return f"{self.student.full_name} - {self.package.name}"
 
+    def save(self, *args, **kwargs):
+        if not self.pk and self.package:
+            self.total_amount = self.package.total_price
+        super().save(*args, **kwargs)
+
+
 class PaymentReceipt(models.Model):
-    amount_paid = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Số tiền đã thu")
-    paid_date = models.DateTimeField(auto_now_add=True, verbose_name="Ngày thu")
-    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='recorded_payments', verbose_name="Người thu")
+    STATUS_CHOICES = [('PENDING', 'Chưa đóng'), ('PAID', 'Đã đóng')]
+    
+    installment_number = models.IntegerField(verbose_name="Đợt thanh toán số")
+    amount_due = models.DecimalField(max_digits=12, decimal_places=0, verbose_name="Số tiền cần đóng")
+    status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='PENDING', verbose_name="Trạng thái")
+    paid_date = models.DateTimeField(null=True, blank=True, verbose_name="Ngày thu")
+    
+    recorded_by = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, blank=True, related_name='recorded_payments', verbose_name="Người thu")
     student_tuition = models.ForeignKey(StudentTuition, on_delete=models.CASCADE, related_name='payments', verbose_name="Thuộc Hồ sơ học phí")
+
     class Meta:
         verbose_name = "Phiếu thu"
         verbose_name_plural = "3.4 Lịch sử Phiếu thu"
 
+    # TỰ ĐỘNG GHI NHẬN NGÀY GIỜ KHI CHUYỂN TRẠNG THÁI SANG "ĐÃ ĐÓNG"
+    def save(self, *args, **kwargs):
+        if self.status == 'PAID' and not self.paid_date:
+            self.paid_date = timezone.now()
+        elif self.status == 'PENDING':
+            self.paid_date = None
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"Đợt {self.installment_number} - {self.student_tuition.student.full_name} ({self.get_status_display()})"
+    
+@receiver(post_save, sender=StudentTuition)
+def create_payment_installments(sender, instance, created, **kwargs):
+    if created and instance.installments_planned > 0:
+        base_amount = instance.total_amount // instance.installments_planned
+        remainder = instance.total_amount % instance.installments_planned
+        
+        for i in range(1, instance.installments_planned + 1):
+            amount = base_amount + remainder if i == 1 else base_amount
+            
+            PaymentReceipt.objects.create(
+                student_tuition=instance,
+                installment_number=i,
+                amount_due=amount,
+                status='PENDING'
+            )
+
+@receiver(post_save, sender=PaymentReceipt)
+def update_tuition_status(sender, instance, **kwargs):
+    tuition = instance.student_tuition
+    
+    total_paid = tuition.payments.filter(status='PAID').aggregate(Sum('amount_due'))['amount_due__sum'] or 0
+    
+    if total_paid >= tuition.total_amount:
+        if tuition.status != 'COMPLETED':
+            tuition.status = 'COMPLETED'
+            tuition.save(update_fields=['status'])
+    else:
+        if tuition.status == 'COMPLETED':
+            tuition.status = 'IN_PROGRESS'
+            tuition.save(update_fields=['status'])
 
 # ==========================================
 # 4. WORKFLOW TASK & ĐÁNH GIÁ 4 KỸ NĂNG
@@ -166,16 +231,9 @@ class GradeRecord(models.Model):
         verbose_name = "Bảng điểm 4 Kỹ năng"
         verbose_name_plural = "4.2 Bảng điểm 4 Kỹ năng"
 
-# [CẬP NHẬT TỰ ĐỘNG TẠO SỔ ĐIỂM]
 @receiver(m2m_changed, sender=ClassGroup.students.through)
 def create_grade_records_for_students(sender, instance, action, pk_set, **kwargs):
-    """
-    Khi Quản lý 'add' nhiều học sinh vào Lớp (action = post_add), 
-    hệ thống tự động quét và tạo sổ điểm trống cho từng bạn.
-    """
     if action == "post_add":
         for student_id in pk_set:
-            GradeRecord.objects.get_or_create(
-                student_id=student_id,
-                class_group=instance
-            )
+            GradeRecord.objects.get_or_create(student_id=student_id, class_group=instance)
+

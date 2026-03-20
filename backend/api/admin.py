@@ -83,13 +83,22 @@ class TuitionPackageAdmin(admin.ModelAdmin):
 
 @admin.register(StudentTuition)
 class StudentTuitionAdmin(admin.ModelAdmin):
-    list_display = ('student', 'package', 'total_amount', 'installments_planned', 'created_at')
-    search_fields = ('student__full_name',)
+    list_display = ('student', 'package', 'total_amount', 'status', 'installments_planned', 'created_at')
+    
+    list_filter = ('status', 'package__package_type', 'created_at') 
+    
+    search_fields = ('student__full_name', 'student__phone', 'package__name')
+    ordering = ('-created_at',)
+    readonly_fields = ('total_amount',)
 
 @admin.register(PaymentReceipt)
 class PaymentReceiptAdmin(admin.ModelAdmin):
-    list_display = ('student_tuition', 'amount_paid', 'paid_date', 'recorded_by')
-    ordering = ('-paid_date',)
+    list_display = ('student_tuition', 'installment_number', 'amount_due', 'status', 'paid_date', 'recorded_by')
+    list_filter = ('status', 'paid_date', 'recorded_by')
+    search_fields = ('student_tuition__student__full_name',)
+    ordering = ('-id',)
+
+    readonly_fields = ('paid_date',)
 
 # 4. Task & Sổ Điểm
 @admin.register(Task)
