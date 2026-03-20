@@ -1,4 +1,3 @@
-# backend/api/serializers.py
 from rest_framework import serializers
 from .models import (
     User, Branch, Course, Band, ClassGroup,
@@ -28,7 +27,6 @@ class ClassGroupSerializer(serializers.ModelSerializer):
     
     class Meta:
         model = ClassGroup
-        # Đã bổ sung 'teachers' và 'students' (dạng danh sách ID)
         fields = ['id', 'name', 'course', 'course_name', 'band', 'band_name', 'status', 'teachers', 'students']
 
 class StudentSerializer(serializers.ModelSerializer):

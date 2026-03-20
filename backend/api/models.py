@@ -1,11 +1,10 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.db.models.signals import m2m_changed # Dùng m2m_changed thay vì post_save
+from django.db.models.signals import m2m_changed 
 from django.dispatch import receiver
 
 # ==========================================
 # 1. QUẢN LÝ TÀI KHOẢN VÀ PHÂN QUYỀN
-# ==========================================
 class User(AbstractUser):
     ROLE_CHOICES = [
         ('ADMIN', 'System Admin'),
@@ -21,15 +20,8 @@ class User(AbstractUser):
         verbose_name = "Tài khoản"
         verbose_name_plural = "1. Quản lý Tài khoản"
 
-    def __str__(self):
-        return f"{self.username} - {self.get_role_display()}"
-
     def save(self, *args, **kwargs):
-        # Hệ thống tự động khóa cổng /admin đối với STAFF và TEACHER
-        if self.role == 'ADMIN':
-            self.is_staff = True
-            self.is_superuser = True
-        elif self.role == 'MANAGER':
+        if self.role in ['ADMIN', 'MANAGER']:
             self.is_staff = True
             self.is_superuser = True
         else:
@@ -37,15 +29,17 @@ class User(AbstractUser):
             self.is_superuser = False
         super().save(*args, **kwargs)
 
+    def __str__(self):
+        return f"{self.username} - {self.get_role_display()}"
+
 # ==========================================
 # 2. CẤU TRÚC ĐÀO TẠO
-# ==========================================
 class Branch(models.Model):
     name = models.CharField(max_length=255, verbose_name="Tên cơ sở")
     address = models.TextField(verbose_name="Địa chỉ")
     class Meta:
         verbose_name = "Cơ sở"
-        verbose_name_plural = "2.1 Cơ sở đào tạo"
+        verbose_name_plural = "2.1 Cơ sở"
     def __str__(self): return f"{self.name} - {self.address}"
 
 class Course(models.Model):
@@ -74,8 +68,6 @@ class ClassGroup(models.Model):
     course = models.ForeignKey(Course, on_delete=models.CASCADE, related_name='class_groups', verbose_name="Thuộc Khóa")
     band = models.ForeignKey(Band, on_delete=models.PROTECT, related_name='class_groups', verbose_name="Thuộc Band")
     teachers = models.ManyToManyField(User, related_name='class_groups', limit_choices_to={'role': 'TEACHER'}, verbose_name="Giáo viên phụ trách")
-    
-    # [CẬP NHẬT QUAN TRỌNG]: Đưa Học viên thẳng vào Lớp học qua ManyToMany
     students = models.ManyToManyField('Student', related_name='enrolled_classes', blank=True, verbose_name="Học viên của lớp")
 
     class Meta:
@@ -85,10 +77,10 @@ class ClassGroup(models.Model):
 
 # ==========================================
 # 3. HỌC VIÊN & HỌC PHÍ
-# ==========================================
 class Student(models.Model):
     STATUS_CHOICES = [('ACTIVE', 'Đang học'), ('INACTIVE', 'Đã nghỉ')]
     full_name = models.CharField(max_length=255, verbose_name="Họ và tên")
+    dob = models.DateField(verbose_name="Ngày sinh", null=True)
     phone = models.CharField(max_length=20, unique=True, verbose_name="Số điện thoại")
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='ACTIVE', verbose_name="Trạng thái")
     parent_name = models.CharField(max_length=255, blank=True, null=True, verbose_name="Tên Phụ huynh")
@@ -130,11 +122,9 @@ class PaymentReceipt(models.Model):
         verbose_name = "Phiếu thu"
         verbose_name_plural = "3.4 Lịch sử Phiếu thu"
 
-# (Đã Xóa class Enrollment vì tích hợp vào ClassGroup)
 
 # ==========================================
 # 4. WORKFLOW TASK & ĐÁNH GIÁ 4 KỸ NĂNG
-# ==========================================
 class Task(models.Model):
     TASK_TYPES = [
         ('CHUYEN_LOP', 'Chuyển lớp'), ('XIN_NGUNG_HOC', 'Xin ngừng học'),
