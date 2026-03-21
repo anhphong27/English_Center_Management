@@ -19,7 +19,7 @@ class BranchViewSet(viewsets.ModelViewSet):
     permission_classes = [IsManagerOrAdmin]
 
 class CourseViewSet(viewsets.ModelViewSet):
-    queryset = Course.objects.all()
+    queryset = Course.objects.select_related('branch').all()
     serializer_class = CourseSerializer
     permission_classes = [IsManagerOrAdmin]
 
@@ -29,7 +29,7 @@ class BandViewSet(viewsets.ModelViewSet):
     permission_classes = [IsManagerOrAdmin]
 
 class ClassGroupViewSet(viewsets.ModelViewSet):
-    queryset = ClassGroup.objects.all()
+    queryset = ClassGroup.objects.select_related('course', 'band').prefetch_related('teachers','students').all()
     serializer_class = ClassGroupSerializer
     permission_classes = [IsManagerOrAdmin]
 
@@ -65,22 +65,22 @@ class StudentViewSet(viewsets.ModelViewSet):
     permission_classes = [IsStaffOrManagerOrAdmin]
 
 class TuitionPackageViewSet(viewsets.ModelViewSet):
-    queryset = TuitionPackage.objects.all()
+    queryset = TuitionPackage.objects.prefetch_related('bands_included').all()
     serializer_class = TuitionPackageSerializer
     permission_classes = [IsManagerOrAdmin]
 
 class StudentTuitionViewSet(viewsets.ModelViewSet):
-    queryset = StudentTuition.objects.all()
+    queryset = StudentTuition.objects.select_related('student', 'package').all()
     serializer_class = StudentTuitionSerializer
     permission_classes = [IsStaffOrManagerOrAdmin]
 
 class PaymentReceiptViewSet(viewsets.ModelViewSet):
-    queryset = PaymentReceipt.objects.all()
+    queryset = PaymentReceipt.objects.select_related('student_tuition__student', 'recorded_by').all()
     serializer_class = PaymentReceiptSerializer
     permission_classes = [IsStaffOrManagerOrAdmin]
 
 class TaskViewSet(viewsets.ModelViewSet):
-    queryset = Task.objects.all().order_by('-created_at')
+    queryset = Task.objects.select_related('created_by', 'assigned_to').order_by('-created_at')
     serializer_class = TaskSerializer
 
     def get_queryset(self):
@@ -91,7 +91,7 @@ class TaskViewSet(viewsets.ModelViewSet):
         return queryset
 
 class GradeRecordViewSet(viewsets.ModelViewSet):
-    queryset = GradeRecord.objects.all()
+    queryset = GradeRecord.objects.select_related('student', 'class_group').all()
     serializer_class = GradeRecordSerializer
 
     def get_queryset(self):
