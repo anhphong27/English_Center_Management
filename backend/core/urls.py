@@ -16,8 +16,18 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
+from drf_spectacular.views import SpectacularAPIView, SpectacularSwaggerView, SpectacularRedocView
 
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('api/v1/', include('api.urls')),
+
+    # 1. API tải file cấu trúc JSON/YAML của toàn bộ hệ thống
+    path('api/schema/', SpectacularAPIView.as_view(), name='schema'),
+    
+    # 2. Giao diện Swagger UI (Giao diện chuẩn, có thể test trực tiếp)
+    path('api/docs/swagger/', SpectacularSwaggerView.as_view(url_name='schema'), name='swagger-ui'),
+    
+    # 3. Giao diện Redoc (Giao diện đọc tài liệu dạng cột rất đẹp và chuyên nghiệp)
+    path('api/docs/redoc/', SpectacularRedocView.as_view(url_name='schema'), name='redoc'),
 ]

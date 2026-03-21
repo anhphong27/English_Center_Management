@@ -45,7 +45,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     # libraries
     'rest_framework',
+    'rest_framework_simplejwt',
     'corsheaders',
+    'drf_spectacular',
     # apps
     'api',
 
@@ -151,6 +153,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
+    'DEFAULT_SCHEMA_CLASS': 'drf_spectacular.openapi.AutoSchema',
 }
 
 SIMPLE_JWT = {
@@ -159,4 +162,14 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
     "USER_ID_FIELD": "id",
     "USER_ID_CLAIM": "user_id",
+}
+
+# CẤU HÌNH GIAO DIỆN TÀI LIỆU API (SWAGGER)
+SPECTACULAR_SETTINGS = {
+    'TITLE': 'ECMS API Portal',
+    'DESCRIPTION': 'Tài liệu API cho Hệ thống Quản lý Trung tâm Tiếng Anh ECMS. Bao gồm các module: Khóa học, Học phí, Workflow Task, và Sổ điểm.',
+    'VERSION': '1.0.0',
+    'SERVE_INCLUDE_SCHEMA': False,
+    # Tự động nhận diện cấu hình JWT Auth để hiển thị nút "Authorize" trên web
+    'SECURITY': [{'jwtAuth': []}],
 }
